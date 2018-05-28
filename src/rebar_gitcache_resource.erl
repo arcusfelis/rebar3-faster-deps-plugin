@@ -1,4 +1,4 @@
--module(rebar_github_resource).
+-module(rebar_gitcache_resource).
 
 -behaviour(rebar_resource).
 
