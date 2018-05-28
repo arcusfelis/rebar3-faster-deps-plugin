@@ -92,5 +92,9 @@ unzip_cached(EscapedZipPath, Dir) ->
     UnzipCmd = io_lib:format("unzip ~ts", [EscapedZipPath]),
     rebar_log:log(debug, "Execute ~ts", [UnzipCmd]),
     rebar_utils:sh(UnzipCmd, [{cd, Dir}]),
+    {ok, [RootDir]} = file:list_dir(Dir),
     %% Remove one level of inclusion (i.e. zip parent directory)
-    rebar_utils:sh("mv ./*/* .", [{cd, Dir}]).
+    Result = rebar_utils:sh("mv ./*/* .", [{cd, Dir}]),
+    file:del_dir(RootDir),
+    Result.
+
