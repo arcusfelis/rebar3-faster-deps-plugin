@@ -91,10 +91,13 @@ wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef) ->
 unzip_cached(EscapedZipPath, Dir) ->
     UnzipCmd = io_lib:format("unzip ~ts", [EscapedZipPath]),
     rebar_log:log(debug, "Execute ~ts", [UnzipCmd]),
-    rebar_utils:sh(UnzipCmd, [{cd, Dir}]),
+    Result = rebar_utils:sh(UnzipCmd, [{cd, Dir}]),
+    %% Unwrap from a root zip directory
     {ok, [RootDir]} = file:list_dir(Dir),
-    %% Remove one level of inclusion (i.e. zip parent directory)
-    Result = rebar_utils:sh("mv ./*/* ./*/.* .", [{cd, Dir}]),
-    file:del_dir(RootDir),
+    FullRootDir = filename:join(Dir, RootDir),
+    {ok, RepoFiles} = file:list_dir(FullRootDir),
+    [ok = file:rename(filename:join(FullRootDir, File), filename:join(Dir, File))
+     || File <- RepoFiles],
+    file:del_dir(FullRootDir),
     Result.
 
