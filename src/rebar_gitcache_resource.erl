@@ -36,11 +36,14 @@ untidy_dep({gitcache, Repo, Vsn}) ->
     {git, Repo, Vsn}.
 
 download_untidy(Dir, {git, "git://github.com/" ++ AddrRest, {ref,GitRef}}, State) ->
+    CacheDir = cache_directory(State),
+    ensure_cachedir_exist(CacheDir),
     UserRepo = remove_git_suffix(AddrRest),
     EscapedGitRef = rebar_utils:escape_chars(GitRef),
     EscapedUserRepo = rebar_utils:escape_chars(UserRepo),
-    Cmd = io_lib:format("wget -O /tmp/~ts.zip https://github.com/~ts/archive/~ts.zip",
-                                 [EscapedGitRef, EscapedUserRepo, EscapedGitRef]),
+    EscapedCacheDir = rebar_utils:escape_chars(CacheDir),
+    Cmd = io_lib:format("wget -O ~ts/~ts.zip https://github.com/~ts/archive/~ts.zip",
+                                 [EscapedCacheDir, EscapedGitRef, EscapedUserRepo, EscapedGitRef]),
     io:format(user, "Execute ~ts", [Cmd]),
     rebar_utils:sh(Cmd, []);
 download_untidy(Dir, _, State) ->
@@ -54,3 +57,9 @@ remove_git_suffix(AddrRest) ->
         false ->
             AddrRest
     end.
+
+cache_directory(State) ->
+    filename:join([rebar_dir:global_cache_dir(rebar_state:opts(State)), "gitcache"]).
+
+ensure_cachedir_exist(CacheDir) ->
+    filelib:ensure_dir(filename:join(CacheDir, "dummy")).
