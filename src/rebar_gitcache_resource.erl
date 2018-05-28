@@ -11,18 +11,18 @@ lock(Dir, Source) ->
     rebar_git_resource:lock(Dir, untidy_dep(Source)).
 
 download(Dir, Source, State) ->
-    io:format(user, "Download ~p into ~p", [Source, Dir]),
+    rebar_log:log(debug, "Download ~p into ~p", [Source, Dir]),
     try download_untidy(Dir, untidy_dep(Source), State) of
         {ok, _} = Result ->
             Result;
         Other ->
-            io:format(user, "Download ~p into ~p failed. Reason ~p",
-                      [Source, Dir, Other]),
+            rebar_log:log(warning, "Download ~p into ~p failed. Reason ~p",
+                          [Source, Dir, Other]),
             rebar_git_resource:download(Dir, untidy_dep(Source), State)
     catch Class:Reason ->
             Stacktrace = erlang:get_stacktrace(),
-            io:format(user, "Download ~p into ~p failed. Reason ~p",
-                      [Source, Dir, {Class, Reason, Stacktrace}]),
+            rebar_log:log(warning, "Download ~p into ~p failed. Reason ~p",
+                          [Source, Dir, {Class, Reason, Stacktrace}]),
             rebar_git_resource:download(Dir, untidy_dep(Source), State)
     end.
 
@@ -71,12 +71,12 @@ cache_directory(State) ->
 wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef) ->
     Cmd = io_lib:format("wget -O ~ts https://github.com/~ts/archive/~ts.zip",
                                  [EscapedZipPath, EscapedUserRepo, EscapedGitRef]),
-    io:format(user, "Execute ~ts", [Cmd]),
+    rebar_log:log(debug, "Execute ~ts", [Cmd]),
     rebar_utils:sh(Cmd, []).
 
 unzip_cached(EscapedZipPath, Dir) ->
     UnzipCmd = io_lib:format("unzip ~ts", [EscapedZipPath]),
-    io:format(user, "Execute ~ts", [UnzipCmd]),
+    rebar_log:log(debug, "Execute ~ts", [UnzipCmd]),
     rebar_utils:sh(UnzipCmd, [{cd, Dir}]),
     %% Remove one level of inclusion (i.e. zip parent directory)
     rebar_utils:sh("mv ./*/* .", [{cd, Dir}]).
