@@ -8,7 +8,14 @@
         ,make_vsn/1]).
 
 lock(Dir, Source) ->
-    rebar_git_resource:lock(Dir, untidy_dep(Source)).
+    case file:read_file_info(filename:join(Dir, ".git")) of
+        {ok, _} ->
+            %% Repo was converted from raw to git (after needs_update called)
+            rebar_git_resource:lock(Dir, untidy_dep(Source));
+        _ ->
+            %% Locked deps stay locked
+            untidy_dep(Source)
+    end.
 
 download(Dir, Source, State) ->
     rebar_log:log(debug, "Download ~p into ~p", [Source, Dir]),
@@ -26,8 +33,8 @@ download(Dir, Source, State) ->
             rebar_git_resource:download(Dir, untidy_dep(Source), State)
     end.
 
-needs_update(Dir, Source) ->
-    rebar_git_resource:make_vsn(Dir, untidy_dep(Source)).
+needs_update(_Dir, _Source) ->
+    true.
 
 make_vsn(Dir) ->
     rebar_git_resource:make_vsn(Dir).
