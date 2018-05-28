@@ -16,6 +16,8 @@ init(State) ->
 
 preprocess_lock_entry({DepName, {git,"git://github.com/" ++ _ = Addr, {ref, ShaRef}}, DepLevel}) ->
     {DepName, {gitcache, Addr, {ref, ShaRef}}, DepLevel};
+preprocess_lock_entry({DepName, {git,"http://github.com/" ++ _ = Addr, {ref, ShaRef}}, DepLevel}) ->
+    {DepName, {gitcache, Addr, {ref, ShaRef}}, DepLevel};
 preprocess_lock_entry({DepName, {git,"https://github.com/" ++ _ = Addr, {ref, ShaRef}}, DepLevel}) ->
     {DepName, {gitcache, Addr, {ref, ShaRef}}, DepLevel};
 preprocess_lock_entry(Other) ->

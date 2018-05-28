@@ -41,11 +41,13 @@ make_vsn(Dir) ->
 
 -spec untidy_dep(tuple()) -> [tuple()].
 untidy_dep({gitcache, Repo, Vsn}) ->
-    {git, https_to_git(Repo), Vsn}.
+    {git, http_or_https_to_git(Repo), Vsn}.
 
-https_to_git("https://" ++ Rest) ->
+http_or_https_to_git("https://" ++ Rest) ->
     "git://" ++ Rest;
-https_to_git(Other) ->
+http_or_https_to_git("http://" ++ Rest) ->
+    "git://" ++ Rest;
+http_or_https_to_git(Other) ->
     Other.
 
 download_untidy(Dir, {git, "git://github.com/" ++ AddrRest, {ref,GitRef}}, State) ->
