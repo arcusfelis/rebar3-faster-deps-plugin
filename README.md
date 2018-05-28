@@ -1,3 +1,20 @@
+SOME COOL STUFF HERE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ORIGINAL README
+
 A rebar3 plugin to enable a nice tidy deps specification for common case
 Erlang projects.
 
