@@ -34,7 +34,7 @@ download(Dir, Source, State) ->
     end.
 
 needs_update(_Dir, _Source) ->
-    true.
+    false.
 
 make_vsn(Dir) ->
     rebar_git_resource:make_vsn(Dir).
