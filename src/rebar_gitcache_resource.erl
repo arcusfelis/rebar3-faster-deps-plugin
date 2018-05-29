@@ -11,26 +11,26 @@ lock(Dir, Source) ->
     case file:read_file_info(filename:join(Dir, ".git")) of
         {ok, _} ->
             %% Repo was converted from raw to git (after needs_update called)
-            rebar_git_resource:lock(Dir, untidy_dep(Source));
+            rebar_git_resource:lock(Dir, gitcache_to_git_dep(Source));
         _ ->
             %% Locked deps stay locked
-            untidy_dep(Source)
+            gitcache_to_git_dep(Source)
     end.
 
 download(Dir, Source, State) ->
     rebar_log:log(debug, "Download ~p into ~p", [Source, Dir]),
-    try download_untidy(Dir, untidy_dep(Source), State) of
+    try download_from_github(Dir, http_or_https_to_git_dep(gitcache_to_git_dep(Source)), State) of
         {ok, _} = Result ->
             Result;
         Other ->
             rebar_log:log(warning, "Download ~p into ~p failed. Reason ~p",
                           [Source, Dir, Other]),
-            rebar_git_resource:download(Dir, untidy_dep(Source), State)
+            rebar_git_resource:download(Dir, gitcache_to_git_dep(Source), State)
     catch Class:Reason ->
             Stacktrace = erlang:get_stacktrace(),
             rebar_log:log(warning, "Download ~p into ~p failed. Reason ~p",
                           [Source, Dir, {Class, Reason, Stacktrace}]),
-            rebar_git_resource:download(Dir, untidy_dep(Source), State)
+            rebar_git_resource:download(Dir, gitcache_to_git_dep(Source), State)
     end.
 
 needs_update(_Dir, _Source) ->
@@ -39,9 +39,12 @@ needs_update(_Dir, _Source) ->
 make_vsn(Dir) ->
     rebar_git_resource:make_vsn(Dir).
 
--spec untidy_dep(tuple()) -> [tuple()].
-untidy_dep({gitcache, Repo, Vsn}) ->
-    {git, http_or_https_to_git(Repo), Vsn}.
+-spec gitcache_to_git_dep(tuple()) -> [tuple()].
+gitcache_to_git_dep({gitcache, Repo, Vsn}) ->
+    {git, Repo, Vsn}.
+
+http_or_https_to_git_dep({Type, Repo, Vsn}) ->
+    {Type, http_or_https_to_git(Repo), Vsn}.
 
 http_or_https_to_git("https://" ++ Rest) ->
     "git://" ++ Rest;
@@ -50,7 +53,7 @@ http_or_https_to_git("http://" ++ Rest) ->
 http_or_https_to_git(Other) ->
     Other.
 
-download_untidy(Dir, {git, "git://github.com/" ++ AddrRest, {ref,GitRef}}, State) ->
+download_from_github(Dir, {git, "git://github.com/" ++ AddrRest, {ref,GitRef}}, State) ->
     CacheDir = cache_directory(State),
     UserRepo = remove_git_suffix(AddrRest),
     ZipName = GitRef ++ ".zip",
@@ -67,7 +70,7 @@ download_untidy(Dir, {git, "git://github.com/" ++ AddrRest, {ref,GitRef}}, State
             wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef)
     end,
     unzip_cached(EscapedZipPath, Dir);
-download_untidy(_Dir, _, _State) ->
+download_from_github(_Dir, _, _State) ->
     {error, pattern_nomatch}.
 
 remove_git_suffix(AddrRest) ->
