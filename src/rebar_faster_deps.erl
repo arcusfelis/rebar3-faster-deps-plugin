@@ -8,6 +8,19 @@
 
 -spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
 init(State) ->
+    case is_supported() of
+        false ->
+            rebar_log:log(warning, "[rebar_faster_deps] Disabled", []),
+            {ok, State};
+        true ->
+            use_gitcache_for_locked_deps(State)
+    end.
+
+%% ===================================================================
+%% Code helpers
+%% ===================================================================
+
+use_gitcache_for_locked_deps(State) ->
     Locks = rebar_state:get(State, {locks, default}, []),
     Locks2 = [preprocess_lock_entry(Lock) || Lock <- Locks],
     State2 = rebar_state:set(State, {locks, default}, Locks2),
@@ -22,3 +35,6 @@ preprocess_lock_entry({DepName, {git,"https://github.com/" ++ _ = Addr, {ref, Sh
     {DepName, {gitcache, Addr, {ref, ShaRef}}, DepLevel};
 preprocess_lock_entry(Other) ->
     Other.
+
+is_supported() ->
+    lists:all(fun(Cmd) -> os:find_executable(Cmd) =/= false end, ["wget", "unzip"]).
