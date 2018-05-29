@@ -10,7 +10,7 @@
 init(State) ->
     case is_supported() of
         false ->
-            rebar_log:log(warning, "[rebar_faster_deps] Disabled", []),
+            rebar_log:log(warn, "[rebar_faster_deps] Disabled", []),
             {ok, State};
         true ->
             use_gitcache_for_locked_deps(State)
