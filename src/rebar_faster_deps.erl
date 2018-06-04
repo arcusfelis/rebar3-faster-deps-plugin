@@ -25,6 +25,9 @@ use_gitcache_for_locked_deps(State) ->
     Locks2 = [preprocess_lock_entry(Lock) || Lock <- Locks],
     State2 = rebar_state:set(State, {locks, default}, Locks2),
     rebar_log:log(info, "[rebar_faster_deps] Rewrite locks", []),
+    rebar_log:log(info, "[rebar_faster_deps] To clone using git command, run git deps with PREFER_GIT_CLONE=true", []),
+    rebar_log:log(info, "[rebar_faster_deps] Example: PREFER_GIT_CLONE=true ./rebar3 get-deps", []),
+
     {ok, rebar_state:add_resource(State2, {gitcache, rebar_gitcache_resource})}.
 
 preprocess_lock_entry({DepName, {git,"git://github.com/" ++ _ = Addr, {ref, ShaRef}}, DepLevel}) ->

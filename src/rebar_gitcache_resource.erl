@@ -18,6 +18,14 @@ lock(Dir, Source) ->
     end.
 
 download(Dir, Source, State) ->
+    case os:getenv("PREFER_GIT_CLONE") of
+        "true" ->
+            rebar_git_resource:download(Dir, gitcache_to_git_dep(Source), State);
+        _ ->
+            download_2(Dir, Source, State)
+    end.
+
+download_2(Dir, Source, State) ->
     rebar_log:log(debug, "Download ~p into ~p", [Source, Dir]),
     try download_from_github(Dir, http_or_https_to_git_dep(gitcache_to_git_dep(Source)), State) of
         {ok, _} = Result ->
@@ -33,8 +41,23 @@ download(Dir, Source, State) ->
             rebar_git_resource:download(Dir, gitcache_to_git_dep(Source), State)
     end.
 
-needs_update(_Dir, _Source) ->
-    false.
+needs_update(Dir, Source) ->
+    case file:read_file_info(filename:join(Dir, ".git")) of
+        {ok, _} ->
+            %% already a local git repo
+            %% Let's rebar_git_resource to decide what to do
+            rebar_git_resource:needs_update(Dir, gitcache_to_git_dep(Source));
+        _ ->
+            nogit_needs_update(Dir, Source)
+    end.
+
+nogit_needs_update(Dir, Source) ->
+    case os:getenv("PREFER_GIT_CLONE") of
+        "true" ->
+            true; %% ask to convert to git repo
+        _ ->
+            false %% do nothing
+    end.
 
 make_vsn(Dir) ->
     rebar_git_resource:make_vsn(Dir).
