@@ -117,7 +117,8 @@ curl_or_wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef) ->
     end.
 
 curl_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef) ->
-    Cmd = io_lib:format("curl -o ~ts https://github.com/~ts/archive/~ts.zip",
+    %% -L to follow redirects
+    Cmd = io_lib:format("curl -L -o ~ts https://github.com/~ts/archive/~ts.zip",
                                  [EscapedZipPath, EscapedUserRepo, EscapedGitRef]),
     rebar_log:log(debug, "Execute ~ts", [Cmd]),
     rebar_utils:sh(Cmd, []).
