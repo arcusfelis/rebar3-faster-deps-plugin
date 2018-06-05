@@ -10,7 +10,7 @@
 init(State) ->
     case is_supported() of
         false ->
-            rebar_log:log(warn, "[rebar_faster_deps] Disabled", []),
+            rebar_log:log(warn, "[rebar_faster_deps] Disabled. Please install unzip and wget", []),
             {ok, State};
         true ->
             use_gitcache_for_locked_deps(State)
@@ -40,4 +40,17 @@ preprocess_lock_entry(Other) ->
     Other.
 
 is_supported() ->
-    lists:all(fun(Cmd) -> os:find_executable(Cmd) =/= false end, ["wget", "unzip"]).
+    has_command_alternatives(command_alternatives()).
+
+command_alternatives() ->
+    [["curl", "wget"],
+     ["unzip"]].
+
+has_command_alternatives(Alternatives) ->
+    lists:all(fun has_any_command/1, Alternatives).
+
+has_any_command(Commands) ->
+    lists:any(fun has_command/1, Commands).
+
+has_command(Cmd) ->
+    os:find_executable(Cmd) =/= false.

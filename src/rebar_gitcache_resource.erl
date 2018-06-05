@@ -51,7 +51,7 @@ needs_update(Dir, Source) ->
             nogit_needs_update(Dir, Source)
     end.
 
-nogit_needs_update(Dir, Source) ->
+nogit_needs_update(_Dir, _Source) ->
     case os:getenv("PREFER_GIT_CLONE") of
         "true" ->
             true; %% ask to convert to git repo
@@ -90,7 +90,7 @@ download_from_github(Dir, {git, "git://github.com/" ++ AddrRest, {ref,GitRef}}, 
             %% exist
             ok;
         _ ->
-            wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef)
+            curl_or_wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef)
     end,
     unzip_cached(EscapedZipPath, Dir);
 download_from_github(_Dir, _, _State) ->
@@ -107,6 +107,20 @@ remove_git_suffix(AddrRest) ->
 
 cache_directory(State) ->
     filename:join([rebar_dir:global_cache_dir(rebar_state:opts(State)), "gitcache"]).
+
+curl_or_wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef) ->
+    case os:find_executable("curl") of
+        false ->
+            wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef);
+        _ ->
+            curl_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef)
+    end.
+
+curl_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef) ->
+    Cmd = io_lib:format("curl -o ~ts https://github.com/~ts/archive/~ts.zip",
+                                 [EscapedZipPath, EscapedUserRepo, EscapedGitRef]),
+    rebar_log:log(debug, "Execute ~ts", [Cmd]),
+    rebar_utils:sh(Cmd, []).
 
 wget_from_github(EscapedZipPath, EscapedUserRepo, EscapedGitRef) ->
     Cmd = io_lib:format("wget -O ~ts https://github.com/~ts/archive/~ts.zip",
