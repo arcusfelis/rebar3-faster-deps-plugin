@@ -34,8 +34,7 @@ download_2(Dir, Source, State) ->
             rebar_log:log(warn, "Download ~p into ~p failed. Reason ~p",
                           [Source, Dir, Other]),
             rebar_git_resource:download(Dir, gitcache_to_git_dep(Source), State)
-    catch Class:Reason ->
-            Stacktrace = erlang:get_stacktrace(),
+    catch Class:Reason:Stacktrace ->
             rebar_log:log(warn, "Download ~p into ~p failed. Reason ~p",
                           [Source, Dir, {Class, Reason, Stacktrace}]),
             rebar_git_resource:download(Dir, gitcache_to_git_dep(Source), State)
